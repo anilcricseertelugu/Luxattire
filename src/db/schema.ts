@@ -240,10 +240,34 @@ export const orderItems = pgTable('orderItem', {
     variantIdIdx: index('orderItem_variantId_idx').on(table.variantId),
 }));
 
+export const addresses = pgTable('address', {
+    id: text('id')
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    userId: text('userId')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type').default('SHIPPING'), // SHIPPING, BILLING
+    isDefault: boolean('isDefault').default(false),
+    name: text('name').notNull(),
+    street1: text('street1').notNull(),
+    street2: text('street2'),
+    city: text('city').notNull(),
+    state: text('state').notNull(),
+    zip: text('zip').notNull(),
+    country: text('country').notNull(),
+    phone: text('phone'),
+    createdAt: timestamp('createdAt', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' }).defaultNow().notNull(),
+}, (table) => ({
+    userIdIdx: index('address_userId_idx').on(table.userId),
+}));
+
 // Relations
 
 export const usersRelations = relations(users, ({ many }) => ({
     orders: many(orders),
+    addresses: many(addresses),
 }));
 
 export const productsRelations = relations(products, ({ one, many }) => ({
@@ -298,5 +322,12 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
     variant: one(productVariants, {
         fields: [orderItems.variantId],
         references: [productVariants.id],
+    }),
+}));
+
+export const addressesRelations = relations(addresses, ({ one }) => ({
+    user: one(users, {
+        fields: [addresses.userId],
+        references: [users.id],
     }),
 }));
